@@ -2156,7 +2156,7 @@ class Calculation(object):
 
             #read magnetic states; name of vasp variable
             curset = self.set
-            if hasattr(curset, 'magnetic_moments') and curset.magnetic_moments:
+            if hasattr(curset, 'magnetic_moments') and curset.magnetic_moments and ('ISPIN' in curset.vasp_params.keys()) and curset.vasp_params['ISPIN'] == 2:
                 self.init.magmom = read_list("magmom", self.natom, float, gen_words)
             # self.init.mag_moments 
 
@@ -5604,7 +5604,7 @@ class CalculationVasp(Calculation):
         return header.calc[child]
 
 
-    def read_pdos_using_phonopy(self, mode = 'pdos', plot = 1, up = 'up1'):
+    def read_pdos_using_phonopy(self, mode = 'pdos', dim = [1,1,1], poscar = '', plot = 1, up = 'up1'):
         """
         mode - 
             pdos
@@ -5620,9 +5620,9 @@ class CalculationVasp(Calculation):
         from calc_manage import create_phonopy_conf_file, read_phonopy_data
 
         self.get_file('vasprun.xml', nametype = 'asoutcar', up = up)
-        create_phonopy_conf_file(self.end, mp = [10, 10, 10], path = self.dir)
+        create_phonopy_conf_file(self.end, mp = [10, 10, 10], dim = dim, path = self.dir)
         # create_phonopy_conf_file(self.end, mp = [36, 36, 36], path = self.dir) #almost no difference was found for Na2X
-        create_phonopy_conf_file(self.end, path = self.dir, filetype = 'band') #create band file
+        create_phonopy_conf_file(self.end, path = self.dir, filetype = 'band', dim = dim) #create band file
 
 
 
@@ -5631,7 +5631,7 @@ class CalculationVasp(Calculation):
 
         os.chdir(self.dir)
         print(self.dir)
-        out = runBash('phonopy --fc '+os.path.basename(self.path['xml']))
+        out = runBash('python.exe phonopy --fc '+os.path.basename(self.path['xml']))
 
         printlog('phonopy out: ', out)
 
@@ -5640,9 +5640,15 @@ class CalculationVasp(Calculation):
         if 'poscar' not in self.path:
             self.path['poscar'] = self.path['output'].replace('OUTCAR','POSCAR')
 
+        if not poscar:
+            poscar = os.path.basename(self.path['poscar'])
+
+
         if mode == 'pdos':
-            print('phonopy -c '+os.path.basename(self.path['poscar'])+p+'  mesh.conf --readfc ')
-            runBash('phonopy -c '+os.path.basename(self.path['poscar'])+p+' mesh.conf --readfc ')
+            # print('python.exe phonopy -c '+os.path.basename(self.path['poscar'])+p+'  mesh.conf --readfc ')
+            # runBash('python.exe phonopy -c '+os.path.basename(self.path['poscar'])+p+' mesh.conf --readfc ')
+            print('python.exe phonopy -c '+poscar+p+'  mesh.conf --readfc ')
+            runBash('python.exe phonopy -c '+poscar+p+' mesh.conf --readfc ')
 
         from calc_manage import read_phonopy_dat_file
 
@@ -5653,19 +5659,27 @@ class CalculationVasp(Calculation):
         
 
         if mode == 'band':
-            print('phonopy -c '+os.path.basename(self.path['poscar'])+' -p band.conf --readfc ')
-            runBash('phonopy -c '+os.path.basename(self.path['poscar'])+' -p band.conf --readfc ')
+            print('python.exe phonopy -c '+poscar+' -p band.conf --readfc ')
+            runBash('python.exe phonopy -c '+poscar+' -p band.conf --readfc ')
 
         if mode == 'free':
-            print('phonopy -c '+os.path.basename(self.path['poscar'])+' -t -p mesh.conf --readfc ')
+            print('python.exe phonopy -c '+poscar+' -t -p mesh.conf --readfc ')
 
-            runBash('phonopy -c '+os.path.basename(self.path['poscar'])+' -t' +p+' mesh.conf --readfc ')
+            runBash('python.exe phonopy -c '+poscar+' -t' +p+' mesh.conf --readfc ')
 
 
             Trange, func = read_phonopy_data('thermal_properties.yaml', convert = 1)
 
             self.F = func # free energy function in eV, still for the whole supercell!
             # print(self.id, self.F)
+
+            Trange, func = read_phonopy_data('thermal_properties.yaml', key = 'entropy', convert = 1)
+            self.entropy = func/1000 # entropy function in eV/K, still for the whole supercell!
+
+
+            Trange, func = read_phonopy_data('thermal_properties.yaml', key = 'energy', convert = 1)
+            self.Uvib = func # internal energy (phonon, including zero-point) function in eV, still for the whole supercell!
+
 
 
         os.chdir(cwd)

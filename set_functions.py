@@ -757,6 +757,20 @@ def init_default_sets():
         header.varset[setname] = copy.deepcopy(s)
     # print(header.varset[setname], setname)
 
+    setname = 'blank' # only default vasp params
+    if setname not in varset:  # init only once
+        s = InputSet(setname)  # default starting set without relaxation
+        s.kpoints_file = True
+        s.add_nbands = 1.25
+        s.vasp_params = {
+            'EDIFF': 1e-04,
+            'EDIFFG': 1e-03,
+            'KSPACING': 0.5,
+            'ENCUT': 300, # should be determined from POTCAR
+        }
+        s.potdir = copy.deepcopy(header.nu_dict)
 
+        s.update()
+        header.varset[setname] = copy.deepcopy(s)
 
     return

@@ -410,6 +410,8 @@ def determine_file_format(input_geo_file):
 
     if 'POSCAR' in input_geo_file or 'CONTCAR' in input_geo_file:
         input_geo_format = 'vasp'
+    elif '.vasp' in input_geo_file:
+        input_geo_format = 'vasp'
     elif '.cif' in input_geo_file:
         input_geo_format = 'cif'
     elif '.geo' in input_geo_file:
@@ -2855,7 +2857,7 @@ def res_loop(it, setlist, verlist,  calc = None, varset = None, analys_type = 'n
 
 
 
-def create_phonopy_conf_file(st, path = '', mp = [10, 10, 10], filetype = 'mesh'):
+def create_phonopy_conf_file(st, path = '', mp = [10, 10, 10], dim = [1, 1, 1], filetype = 'mesh'):
 
     """filetype
             mesh - mesh.conf
@@ -2873,7 +2875,10 @@ def create_phonopy_conf_file(st, path = '', mp = [10, 10, 10], filetype = 'mesh'
         filename = path+'/mesh.conf'
 
     with open(filename, 'w', newline = '') as f:
-        f.write("DIM = 1 1 1\n")
+        # f.write("DIM = 1 1 1\n")
+        f.write("DIM = ")
+        f.write(" ".join(map(str, dim)))
+        f.write('\n')
         f.write("ATOM_NAME = ")
         for z in st.znucl:
             el = element_name_inv(z)
