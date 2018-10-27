@@ -1,11 +1,11 @@
 import setuptools
 
-with open("siman/README.md", "r") as fh:
+with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="siman",
-    version="0.9.5",
+    version="0.9.5r",
     author="Dmitry Aksenov",
     author_email="dimonaks@gmail.com",
     description="Manager for DFT calculations",

@@ -2237,11 +2237,9 @@ class Calculation(object):
             #read magnetic states; name of vasp variable
             curset = self.set
 #             if hasattr(curset, 'magnetic_moments') and curset.magnetic_moments and ('ISPIN' in curset.vasp_params.keys()) and curset.vasp_params['ISPIN'] == 2:
-            magmom = read_list("magmom", self.natom, float, gen_words)
-#             if magmom[0] is not None:
-#                 self.init.magmom = magmom
-            # self.init.mag_moments 
-
+            self.init.magmom = read_list("magmom", self.natom, float, gen_words)
+            # if magmom[0] is not None:
+            #     self.init.magmom = magmom
 
 
 
@@ -4518,8 +4516,12 @@ class CalculationVasp(Calculation):
                     if "in kB" in line:
                         # print(line)
                         line = line.replace('-', ' -')
-
-                        self.stress = [float(i)*100 for i in line.split()[2:]]  # in MPa 
+                        # print(line)
+                        if '*' in line:
+                            self.stress = [0,0,0] # problem with stresses
+                            printlog('Warning! Some problem with *in kB* line of OUTCAR')
+                        else:
+                            self.stress = [float(i)*100 for i in line.split()[2:]]  # in MPa 
                     if "Total  " in line:
                         # print(line)
                         line = line.replace('-', ' -')
@@ -4527,6 +4529,8 @@ class CalculationVasp(Calculation):
                             self.intstress = [int(float(i)*1000) for i in line.split()[1:]] #stress in internal units; can be regarded as forces
                         except:
                             self.intstress = [0,0,0]
+                            printlog('Warning! Some problem with *Total * line of OUTCAR')
+
                     if "external pressure =" in line: 
                         #print iterat
                         self.extpress = float(line.split()[3]) * 100 # in MPa 
@@ -5587,7 +5591,7 @@ class CalculationVasp(Calculation):
             p = ''
 
         from siman.calc_manage import create_phonopy_conf_file, read_phonopy_data
-        phonopy_command = siman.header.PATH2PHONOPY
+        from siman.header import PATH2PHONOPY as phonopy_command
         
         self.get_file('vasprun.xml', nametype = 'asoutcar', up = up)
         create_phonopy_conf_file(self.end, mp = [10, 10, 10], dim = [1, 1, 1], path = self.dir)
