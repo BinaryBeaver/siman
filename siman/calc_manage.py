@@ -688,6 +688,8 @@ def choose_cluster(cluster_name, cluster_home, corenum):
         header.cluster_home = run_on_server('pwd', header.cluster_address)
     else:
         header.cluster_home = ''
+    
+    clust['homepath'] = header.cluster_home
 
     printlog('The home folder on cluster is ', header.cluster_home)
 
@@ -2578,9 +2580,16 @@ def res_loop(it, setlist, verlist,  calc = None, varset = None, analys_type = 'n
 
             if 'jmol' in show:
                 # printlog(os.getcwd()+'/'+cl.path['output'], imp = 'Y')
-                cl.jmol()
+                if 'r' in show:
+                    r = 1
+                else:
+                    r = 0
+                cl.jmol(r =r)
                 # sys.exit()
                 return
+
+            if 'out' in show:
+                runBash('subl '+cl.path['output'])
 
 
             if 'pos' in show:
@@ -2771,7 +2780,11 @@ def res_loop(it, setlist, verlist,  calc = None, varset = None, analys_type = 'n
 
         if id not in calc or '4' not in calc[id].state:
             # printlog(calc[id].state, imp = 'Y')
-            print_and_log( "res_loop(): Calculation ",id, 'is unfinished; return \{\} []',cl.dir, imp = 'Y')
+            try:
+                dire = cl.dir
+            except:
+                dire = ''
+            print_and_log( "res_loop(): Calculation ",id, 'is unfinished; return \{\} []',dire, imp = 'Y')
             return {}, []
         
 
